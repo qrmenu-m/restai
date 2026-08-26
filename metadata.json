@@ -1,0 +1,8 @@
+{
+  "name": "RestoAI — Автоматизация для Столовых, Кафе и Забегаловок",
+  "description": "Современные сайты, быстрое QR-меню, меню дня и AI-автоматизация для столовых, кафе, забегаловок, бистро, донерных и стритфуда по доступной цене в Казахстане и СНГ.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
