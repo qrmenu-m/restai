@@ -67,11 +67,16 @@ export const Footer: React.FC<Props> = ({ onOpenAuditModal, onOpenAiTestModal })
           {/* Col 1: Brand Info */}
           <div className="space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#C9A15A] to-[#B8794A] flex items-center justify-center text-[#0B0B0D] font-bold shadow-md">
-                <Bot className="w-4 h-4" />
+              <div className="w-9 h-9 rounded-lg overflow-hidden border border-[#C9A15A]/40 flex items-center justify-center bg-[#0B0B0D] shadow-md">
+                <img 
+                  src="/logo.png" 
+                  alt="RestAI Logo" 
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
               </div>
               <div className="font-display font-black text-lg tracking-tight text-[#F5F1EA]">
-                RESTO<span className="text-[#C9A15A]">.AI</span>
+                REST<span className="text-[#C9A15A]">.AI</span>
               </div>
             </div>
 
@@ -164,7 +169,7 @@ export const Footer: React.FC<Props> = ({ onOpenAuditModal, onOpenAiTestModal })
 
             <div className="pt-2 grid grid-cols-2 gap-2">
               <a
-                href="https://wa.me/77086558518"
+                href="https://wa.me/77086558518?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5!%20%D0%A5%D0%BE%D1%87%D1%83%20%D0%BF%D0%BE%D0%BB%D1%83%D1%87%D0%B8%D1%82%D1%8C%20%D0%BA%D0%BE%D0%BD%D1%81%D1%83%D0%BB%D1%8C%D1%82%D0%B0%D1%86%D0%B8%D1%8E%20%D0%B8%20%D0%B0%D1%83%D0%B4%D0%B8%D1%82%20%D0%B4%D0%BB%D1%8F%20%D0%B7%D0%B0%D0%B2%D0%B5%D0%B4%D0%B5%D0%BD%D0%B8%D1%8F."
                 target="_blank"
                 rel="noreferrer"
                 className="py-2.5 px-3 rounded-xl bg-[#132219] hover:bg-[#1a2f23] border border-[#6FA98A]/40 text-[#6FA98A] font-bold text-xs flex items-center justify-center gap-1.5 transition-all text-center"

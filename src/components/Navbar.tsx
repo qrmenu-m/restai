@@ -43,13 +43,18 @@ export const Navbar: React.FC<Props> = ({ onOpenCalculator, onOpenAuditModal, on
         
         {/* Brand Logo */}
         <a href="#" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1E1E24] to-[#121215] border border-[#C9A15A]/40 flex items-center justify-center transition-all duration-300 group-hover:border-[#C9A15A] group-hover:shadow-[0_0_15px_rgba(201,161,90,0.3)]">
-            <Sparkles className="w-5 h-5 text-[#C9A15A]" />
+          <div className="w-11 h-11 rounded-xl overflow-hidden border border-[#C9A15A]/40 flex items-center justify-center transition-all duration-300 group-hover:border-[#C9A15A] group-hover:shadow-[0_0_20px_rgba(201,161,90,0.4)] bg-[#0B0B0D]">
+            <img 
+              src="/logo.png" 
+              alt="RestAI Logo" 
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              referrerPolicy="no-referrer"
+            />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <span className="font-display font-extrabold text-xl tracking-tight text-[#F5F1EA]">
-                Resto<span className="text-[#C9A15A]">AI</span>
+                Rest<span className="text-[#C9A15A]">AI</span>
               </span>
               <span className="px-1.5 py-0.5 rounded text-[10px] font-mono-code font-bold uppercase tracking-wider bg-[#C9A15A]/15 text-[#C9A15A] border border-[#C9A15A]/30">
                 PRO
@@ -102,11 +107,11 @@ export const Navbar: React.FC<Props> = ({ onOpenCalculator, onOpenAuditModal, on
         <div className="hidden sm:flex items-center gap-2.5">
           {/* Direct WhatsApp / Telegram quick links */}
           <a
-            href="https://wa.me/77086558518"
+            href="https://wa.me/77086558518?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5!%20%D0%A5%D0%BE%D1%87%D1%83%20%D1%83%D0%B7%D0%BD%D0%B0%D1%82%D1%8C%20%D0%BF%D0%BE%D0%B4%D1%80%D0%BE%D0%B1%D0%BD%D0%B5%D0%B5%20%D0%BE%D0%B1%20AI-%D0%B0%D0%B2%D1%82%D0%BE%D0%BC%D0%B0%D1%82%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D0%B8%20%D0%B8%20QR-%D0%BC%D0%B5%D0%BD%D1%8E%20%D0%B4%D0%BB%D1%8F%20%D0%B7%D0%B0%D0%B2%D0%B5%D0%B4%D0%B5%D0%BD%D0%B8%D1%8F."
             target="_blank"
             rel="noreferrer"
             className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#132219] hover:bg-[#1a2f23] border border-[#6FA98A]/40 text-[#6FA98A] text-xs font-semibold transition-all"
-            title="WhatsApp: 87086558518"
+            title="WhatsApp: +7 (708) 655-85-18"
           >
             <span>WhatsApp</span>
           </a>
@@ -211,7 +216,7 @@ export const Navbar: React.FC<Props> = ({ onOpenCalculator, onOpenAuditModal, on
 
           <div className="grid grid-cols-2 gap-2 pt-2">
             <a
-              href="https://wa.me/77086558518"
+              href="https://wa.me/77086558518?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5!%20%D0%A5%D0%BE%D1%87%D1%83%20%D1%83%D0%B7%D0%BD%D0%B0%D1%82%D1%8C%20%D0%BF%D0%BE%D0%B4%D1%80%D0%BE%D0%B1%D0%BD%D0%B5%D0%B5%20%D0%BE%D0%B1%20AI-%D0%B0%D0%B2%D1%82%D0%BE%D0%BC%D0%B0%D1%82%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D0%B8%20%D0%B8%20QR-%D0%BC%D0%B5%D0%BD%D1%8E."
               target="_blank"
               rel="noreferrer"
               className="py-2.5 rounded-xl bg-[#132219] text-[#6FA98A] border border-[#6FA98A]/30 text-xs font-semibold flex items-center justify-center gap-1.5"

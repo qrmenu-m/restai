@@ -25,6 +25,7 @@ export const AuditModal: React.FC<Props> = ({ isOpen, onClose, customData }) => 
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [lastWaUrl, setLastWaUrl] = useState('');
 
   React.useEffect(() => {
     if (isOpen) {
@@ -34,11 +35,37 @@ export const AuditModal: React.FC<Props> = ({ isOpen, onClose, customData }) => 
 
   if (!isOpen) return null;
 
+  const buildWhatsAppUrl = () => {
+    const services = customData?.servicesSelected?.length 
+      ? customData.servicesSelected.join(', ') 
+      : 'Комплексный аудит меню и AI-автоматизация';
+
+    const calcDetails = customData?.estimatedOneTime 
+      ? `\n💰 Расчет калькулятора:\n• Внедрение: ${customData.estimatedOneTime}\n• Абонплата: ${customData.estimatedMonthly}` 
+      : '';
+
+    const text = `👋 Здравствуйте! Заявка на аудит с сайта RestoAI:
+
+👤 Имя: ${name || 'Клиент'}
+📞 Телефон: ${phone || 'Не указан'}
+🏢 Заведение: ${establishment || 'Не указано'}
+📍 Город: ${city}
+🛠 Услуги: ${services}${calcDetails}
+${message ? `💬 Меню/Instagram/Пожелания: ${message}\n` : ''}
+⚡ Прошу провести бесплатный аудит и связаться со мной.`;
+
+    return `https://wa.me/77086558518?text=${encodeURIComponent(text)}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
+    const waUrl = buildWhatsAppUrl();
+    setLastWaUrl(waUrl);
+
     try {
+      // 1. Save lead to backend log
       await fetch('/api/lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -53,11 +80,17 @@ export const AuditModal: React.FC<Props> = ({ isOpen, onClose, customData }) => 
           estimatedMonthly: customData?.estimatedMonthly,
         })
       });
-      setSubmitted(true);
-    } catch (e) {
-      setSubmitted(true);
+    } catch (err) {
+      console.warn('Backend lead log error, continuing to WhatsApp:', err);
     } finally {
       setLoading(false);
+      setSubmitted(true);
+      // 2. Open WhatsApp directly with the structured lead message
+      try {
+        window.open(waUrl, '_blank', 'noopener,noreferrer');
+      } catch (err) {
+        console.warn('Window open was prevented, user can click direct button:', err);
+      }
     }
   };
 
@@ -73,7 +106,7 @@ export const AuditModal: React.FC<Props> = ({ isOpen, onClose, customData }) => 
             </div>
             <div>
               <h3 className="text-base font-bold text-[#F5F1EA]">Заявка на бесплатный аудит</h3>
-              <p className="text-[11px] text-[#A3A3A8]">Расчет экономии и запуск меню за 24–48 часов</p>
+              <p className="text-[11px] text-[#A3A3A8]">Прямая связь с ведущим инженером в WhatsApp за 15 минут</p>
             </div>
           </div>
 
@@ -88,38 +121,42 @@ export const AuditModal: React.FC<Props> = ({ isOpen, onClose, customData }) => 
         {/* Content */}
         <div className="p-6">
           {submitted ? (
-            <div className="text-center py-8 space-y-4">
+            <div className="text-center py-6 space-y-4">
               <div className="w-14 h-14 rounded-full bg-[#6FA98A]/20 border border-[#6FA98A]/40 flex items-center justify-center mx-auto text-[#6FA98A]">
                 <CheckCircle2 className="w-8 h-8" />
               </div>
-              <h4 className="text-xl font-bold text-[#F5F1EA]">Спасибо, {name || 'партнер'}!</h4>
+              <h4 className="text-xl font-bold text-[#F5F1EA]">Заявка сформирована, {name || 'партнер'}!</h4>
               <p className="text-xs text-[#A3A3A8] max-w-md mx-auto leading-relaxed">
-                Мы получили вашу заявку. Наш специалист свяжется с вами в WhatsApp или по телефону в течение 15 минут для уточнения меню.
+                Мы открыли WhatsApp с готовым текстом вашей заявки на номер <strong className="text-[#F5F1EA]">+7 (708) 655-85-18</strong>. Если окно не открылось автоматически, нажмите зеленую кнопку ниже:
               </p>
 
-              <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <div className="pt-2 flex flex-col items-center justify-center gap-3">
                 <a
-                  href="https://wa.me/77086558518"
+                  href={lastWaUrl || buildWhatsAppUrl()}
                   target="_blank"
                   rel="noreferrer"
-                  className="px-4 py-2.5 rounded-xl bg-[#132219] hover:bg-[#1a2f23] border border-[#6FA98A]/50 text-[#6FA98A] font-bold text-xs flex items-center gap-1.5"
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#25D366] to-[#128C7E] hover:brightness-110 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(37,211,102,0.4)] transition-all animate-pulse"
                 >
-                  <span>WhatsApp: +7 (708) 655-85-18</span>
+                  <MessageSquare className="w-4 h-4" />
+                  <span>💬 Отправить заявку в WhatsApp (+7 708 655-85-18)</span>
                 </a>
-                <a
-                  href="https://t.me/Ak1kat"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-4 py-2.5 rounded-xl bg-[#2AABEE] text-white font-bold text-xs flex items-center gap-1.5 hover:brightness-110"
-                >
-                  <span>Telegram: @Ak1kat</span>
-                </a>
-                <button
-                  onClick={onClose}
-                  className="px-4 py-2.5 rounded-xl bg-[#20202B] text-[#D1D1D6] font-semibold text-xs cursor-pointer"
-                >
-                  Закрыть
-                </button>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <a
+                    href="https://t.me/Ak1kat"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-4 py-2.5 rounded-xl bg-[#2AABEE]/15 hover:bg-[#2AABEE]/25 border border-[#2AABEE]/40 text-[#2AABEE] font-bold text-xs flex items-center gap-1.5 transition-all"
+                  >
+                    <span>Telegram: @Ak1kat</span>
+                  </a>
+                  <button
+                    onClick={onClose}
+                    className="px-4 py-2.5 rounded-xl bg-[#20202B] text-[#D1D1D6] hover:text-white font-semibold text-xs transition-colors cursor-pointer"
+                  >
+                    Закрыть окно
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
@@ -160,7 +197,7 @@ export const AuditModal: React.FC<Props> = ({ isOpen, onClose, customData }) => 
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+7 (701) 000-00-00"
+                    placeholder="+7 (708) 000-00-00"
                     className="w-full px-3 py-2.5 rounded-xl bg-[#0A0A0D] border border-[#272734] text-xs text-[#F5F1EA] focus:border-[#C9A15A] outline-none"
                   />
                 </div>
@@ -175,7 +212,7 @@ export const AuditModal: React.FC<Props> = ({ isOpen, onClose, customData }) => 
                     type="text"
                     value={establishment}
                     onChange={(e) => setEstablishment(e.target.value)}
-                    placeholder="Например: Ресторан «Nomad», Кафе-бистро «Sultan»"
+                    placeholder="Например: Ресторан «Nomad», Кафе «Sultan»"
                     className="w-full px-3 py-2.5 rounded-xl bg-[#0A0A0D] border border-[#272734] text-xs text-[#F5F1EA] focus:border-[#C9A15A] outline-none"
                   />
                 </div>
@@ -219,12 +256,12 @@ export const AuditModal: React.FC<Props> = ({ isOpen, onClose, customData }) => 
                   className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#C9A15A] to-[#B8794A] hover:from-[#D8AF67] hover:to-[#C68758] text-[#0B0B0D] font-extrabold text-sm transition-all shadow-[0_0_20px_rgba(201,161,90,0.3)] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   <Send className="w-4 h-4" />
-                  <span>{loading ? 'Отправка...' : 'Отправить заявку на аудит'}</span>
+                  <span>{loading ? 'Формирование заявки...' : 'Отправить заявку на WhatsApp (+7 708 655-85-18)'}</span>
                 </button>
               </div>
 
               <p className="text-[10px] text-center text-[#A3A3A8]">
-                Нажимая кнопку, вы соглашаетесь на оперативный аудит вашего меню. Данные конфиденциальны.
+                Заявка сразу поступит напрямую на WhatsApp <span className="text-[#C9A15A]">+7 (708) 655-85-18</span> для оперативного ответа.
               </p>
 
             </form>

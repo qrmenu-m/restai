@@ -81,7 +81,6 @@ export const Hero: React.FC<Props> = ({ onOpenCalculator, onOpenAiTestModal, onO
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#C9A15A]"></span>
             </span>
             <span className="font-semibold tracking-wide">AI-АВТОМАТИЗАЦИЯ ДЛЯ ОБЩЕПИТА И HORECA</span>
-            <span className="text-[#C9A15A] font-bold">₸</span>
           </div>
         </div>
 

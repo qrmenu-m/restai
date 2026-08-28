@@ -45,9 +45,9 @@ export const LiveAiTestModal: React.FC<Props> = ({ isOpen, onClose, initialMode 
     {
       id: 'welcome',
       sender: 'ai',
-      text: 'Здравствуйте! Я — AI-консультант платформы RestoAI на базе **Gemini 3.7 Flash**. Задайте мне любой живой вопрос по автоматизации общепита в РК, расчету себестоимости, QR-меню, ответам на отзывы или росту выручки!',
+      text: 'Здравствуйте! Я — ваш персональный AI-консультант RestoAI. Задайте мне любой вопрос по автоматизации заведения в РК, расчету фудкоста, QR-меню, ответам на отзывы или увеличению среднего чека!',
       timestamp: 'Только что',
-      meta: { isLiveApi: true, model: 'gemini-3.7-flash', latencyMs: 310 }
+      meta: { isLiveApi: true, model: 'RestoAI', latencyMs: 280 }
     }
   ]);
   const [chatInput, setChatInput] = useState('');
@@ -215,7 +215,7 @@ export const LiveAiTestModal: React.FC<Props> = ({ isOpen, onClose, initialMode 
                 <h3 className="text-base font-bold text-[#F5F1EA]">Интерактивный AI Тест-Драйв</h3>
                 <span className="px-2 py-0.5 rounded-full bg-[#6FA98A]/15 text-[#6FA98A] font-mono-code text-[10px] font-bold border border-[#6FA98A]/30 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#6FA98A] animate-pulse"></span>
-                  Gemini Live API (Fast)
+                  AI Live Neural Engine
                 </span>
               </div>
               <p className="text-[11px] text-[#A3A3A8]">Проверьте генерацию ресторанного контента и живой диалог с ИИ в реальном времени</p>
@@ -312,7 +312,7 @@ export const LiveAiTestModal: React.FC<Props> = ({ isOpen, onClose, initialMode 
                     className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
                   >
                     <div className="flex items-center gap-2 mb-1 text-[10px] font-mono-code text-[#A3A3A8]">
-                      <span>{msg.sender === 'user' ? 'Вы' : '🤖 RestoAI (Gemini AI)'}</span>
+                      <span>{msg.sender === 'user' ? 'Вы' : '🤖 RestoAI Assistant'}</span>
                       <span>• {msg.timestamp}</span>
                       {msg.meta?.latencyMs && (
                         <span className="text-[#6FA98A]">({msg.meta.latencyMs} ms)</span>
@@ -332,7 +332,7 @@ export const LiveAiTestModal: React.FC<Props> = ({ isOpen, onClose, initialMode 
                         <div className="pt-2 mt-2 border-t border-[#252536] flex items-center justify-between text-[10px] text-[#A3A3A8]">
                           <span className="flex items-center gap-1 text-[#6FA98A]">
                             <Zap className="w-3 h-3" />
-                            {msg.meta?.isLiveApi ? `API Live (${msg.meta.model || 'Gemini'})` : 'Smart Engine'}
+                            {msg.meta?.isLiveApi ? 'Live AI Response' : 'RestoAI Engine'}
                           </span>
                           <button
                             onClick={() => copyToClipboard(msg.text, msg.id)}
@@ -350,7 +350,7 @@ export const LiveAiTestModal: React.FC<Props> = ({ isOpen, onClose, initialMode 
                 {chatLoading && (
                   <div className="flex items-center gap-2.5 p-3 rounded-xl bg-[#181822] border border-[#272736] text-xs text-[#E6C280] w-fit">
                     <div className="w-2 h-2 rounded-full bg-[#C9A15A] animate-ping"></div>
-                    <span>Gemini генерирует ответ в реальном времени...</span>
+                    <span>AI-ассистент генерирует ответ в реальном времени...</span>
                   </div>
                 )}
               </div>
@@ -486,7 +486,7 @@ export const LiveAiTestModal: React.FC<Props> = ({ isOpen, onClose, initialMode 
                   className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#C9A15A] to-[#B8794A] hover:from-[#D8AF67] hover:to-[#C68758] text-[#0B0B0D] font-extrabold text-xs flex items-center gap-2 shadow-lg transition-all disabled:opacity-50 cursor-pointer"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>{dishLoading ? 'Gemini 3.7 генерирует...' : 'Сгенерировать AI-описание'}</span>
+                  <span>{dishLoading ? 'AI генерирует описание...' : 'Сгенерировать AI-описание'}</span>
                 </button>
               </div>
 
@@ -497,7 +497,7 @@ export const LiveAiTestModal: React.FC<Props> = ({ isOpen, onClose, initialMode 
                     <div className="flex items-center gap-2">
                       <span className="font-mono-code font-bold text-[#C9A15A]">ГОТОВОЕ ОПИСАНИЕ ДЛЯ QR-МЕНЮ:</span>
                       {dishMeta?.isLiveApi && (
-                        <span className="text-[10px] text-[#6FA98A] font-mono-code">⚡ Gemini 3.7 Flash ({dishMeta.latencyMs} ms)</span>
+                        <span className="text-[10px] text-[#6FA98A] font-mono-code">⚡ AI Response ({dishMeta.latencyMs} ms)</span>
                       )}
                     </div>
                     <button
@@ -635,7 +635,7 @@ export const LiveAiTestModal: React.FC<Props> = ({ isOpen, onClose, initialMode 
                   className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#6FA98A] to-[#4E876A] hover:brightness-110 text-[#0B0B0D] font-extrabold text-xs flex items-center gap-2 shadow-lg transition-all disabled:opacity-50 cursor-pointer"
                 >
                   <MessageSquare className="w-3.5 h-3.5" />
-                  <span>{reviewLoading ? 'Gemini составляет ответ...' : 'Сгенерировать ответ заведения'}</span>
+                  <span>{reviewLoading ? 'AI составляет ответ...' : 'Сгенерировать ответ заведения'}</span>
                 </button>
               </div>
 
@@ -646,7 +646,7 @@ export const LiveAiTestModal: React.FC<Props> = ({ isOpen, onClose, initialMode 
                     <div className="flex items-center gap-2">
                       <span className="font-mono-code font-bold text-[#6FA98A]">ОТВЕТ УПРАВЛЯЮЩЕГО ДЛЯ {platform.toUpperCase()}:</span>
                       {reviewMeta?.isLiveApi && (
-                        <span className="text-[10px] text-[#6FA98A] font-mono-code">⚡ Gemini Live ({reviewMeta.latencyMs} ms)</span>
+                        <span className="text-[10px] text-[#6FA98A] font-mono-code">⚡ AI Response ({reviewMeta.latencyMs} ms)</span>
                       )}
                     </div>
                     <button
