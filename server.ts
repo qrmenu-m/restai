@@ -47,7 +47,7 @@ async function callGeminiModel(contents: string, systemInstruction?: string, isJ
   const ai = getAIClient();
   if (!ai) return null;
 
-  const modelsToTry = ['gemini-3.5-flash-lite', 'gemini-3.5-flash'];
+  const modelsToTry = ['gemini-3.7-flash', 'gemini-2.5-flash', 'gemini-3.1-flash-lite'];
   let lastError = null;
 
   for (const modelName of modelsToTry) {
@@ -277,9 +277,26 @@ app.post('/api/ai/chat', async (req, res) => {
     }
 
     const duration = Date.now() - startTime;
+    const lowerMsg = message.toLowerCase();
+    let smartReply = '';
+
+    if (lowerMsg.includes('привет') || lowerMsg.includes('салам') || lowerMsg.includes('здравствуй') || lowerMsg.includes('хай') || lowerMsg.includes('даров')) {
+      smartReply = 'Салем! Рад знакомству. Я — AI-консультант RestoAI. Чем могу помочь вашему заведению? Могу рассчитать фудкост блюд, настроить мгновенное QR-меню, оптимизировать автоответы в 2GIS или подготовить расчет внедрения.';
+    } else if (lowerMsg.includes('тариф') || lowerMsg.includes('цена') || lowerMsg.includes('стоимость') || lowerMsg.includes('сколько')) {
+      smartReply = 'У нас действуют гибкие тарифы под любой формат:\n• **Базовый старт (QR-меню)** — от 45 000 ₸ разово\n• **Smart HoReCa (Меню + AI-описания + 2GIS + Бот)** — 125 000 ₸\n• **Full AI Ecosystem (Все 6 модулей с техкартами и дайджестом)** — 210 000 ₸.\n\nВы также можете выбрать отдельные опции в интерактивном калькуляторе на сайте!';
+    } else if (lowerMsg.includes('меню') || lowerMsg.includes('qr') || lowerMsg.includes('кьюар')) {
+      smartReply = 'Наше QR-меню открывается за рекордные 0.18 сек без скачивания приложений, поддерживает стоп-листы в 1 клик, авто-перевод на казахский/английский и сочные AI-описания блюд, поднимающие средний чек на 15–20%.';
+    } else if (lowerMsg.includes('отзыв') || lowerMsg.includes('2gis') || lowerMsg.includes('2гис') || lowerMsg.includes('яндекс') || lowerMsg.includes('карты')) {
+      smartReply = 'Модуль авто-ответов на отзывы анализирует тональность, благодарит за высокие оценки и бережно отрабатывает негатив за 60 секунд, предотвращая слив репутации в 2GIS и Google Maps.';
+    } else if (lowerMsg.includes('фудкост') || lowerMsg.includes('техкарт') || lowerMsg.includes('себестоим') || lowerMsg.includes('маржа')) {
+      smartReply = 'ИИ-техкарты автоматически пересчитывают себестоимость при каждом изменении цен у поставщиков мяса и овощей. Если маржа порции падает ниже 65%, система сразу сигнализирует шефу и владельцу.';
+    } else {
+      smartReply = `**Рекомендация эксперта RestoAI:**\n\nПо вашему запросу: *«${message}»*\n\n1. **Экономика и маржинальность:** Оптимизируйте техкарты и зафиксируйте фудкост на уровне 28–34%.\n2. **Скорость обслуживания:** Внедрите электронное QR-меню со стоп-листами для ускорения посадки.\n3. **Увеличение среднего чека:** Настройте умные гастрономические допродажи и комбо-обеды.\n4. **Репутация в 2GIS:** Отвечайте на отзывы персонально в течение 15 минут.`;
+    }
+
     return res.json({
       success: true,
-      answer: `**Рекомендация эксперта RestoAI:**\n\nПо вашему вопросу: *«${message}»*:\n\n1. **Экономика и маржинальность:** Оптимизируйте техкарты и зафиксируйте фудкост на уровне 28–34%.\n2. **Скорость обслуживания:** Внедрите электронное QR-меню с откликом 0.18 сек для ускорения посадки.\n3. **Увеличение среднего чека:** Настройте умные допродажи и рассылку ланчей.\n4. **Репутация в 2GIS:** Отвечайте на 100% отзывов персонально в течение 15 минут.`,
+      answer: smartReply,
       meta: {
         isLiveApi: false,
         latencyMs: duration,
