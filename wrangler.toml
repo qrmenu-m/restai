@@ -1,0 +1,9 @@
+name = "restai"
+main = "public/_worker.js"
+compatibility_date = "2024-04-01"
+
+[site]
+bucket = "./dist"
+
+[vars]
+ENVIRONMENT = "production"

@@ -18,6 +18,7 @@ import {
   TrendingUp,
   ShieldAlert
 } from 'lucide-react';
+import { sendChatMessage, generateDishDescription, generateReviewReply } from '../utils/aiService';
 
 interface Props {
   isOpen: boolean;
@@ -93,19 +94,13 @@ export const LiveAiTestModal: React.FC<Props> = ({ isOpen, onClose, initialMode 
     setChatLoading(true);
 
     try {
-      const res = await fetch('/api/ai/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: textToSend })
-      });
-      const data = await res.json();
-      
+      const res = await sendChatMessage(textToSend);
       const aiMsg: ChatMessage = {
         id: String(Date.now() + 1),
         sender: 'ai',
-        text: data.answer || 'Ответ сформирован.',
+        text: res.answer,
         timestamp: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
-        meta: data.meta
+        meta: res.meta
       };
       setChatMessages(prev => [...prev, aiMsg]);
     } catch (e: any) {
@@ -129,21 +124,16 @@ export const LiveAiTestModal: React.FC<Props> = ({ isOpen, onClose, initialMode 
     setDishMeta(null);
 
     try {
-      const res = await fetch('/api/ai/describe-dish', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          dishName, 
-          ingredients, 
-          category,
-          style: dishStyle,
-          language: dishLanguage
-        })
+      const res = await generateDishDescription({ 
+        dishName, 
+        ingredients, 
+        category,
+        style: dishStyle,
+        language: dishLanguage
       });
-      const data = await res.json();
-      if (data.data) {
-        setGeneratedDishResult(data.data);
-        setDishMeta(data.meta);
+      if (res.data) {
+        setGeneratedDishResult(res.data);
+        setDishMeta(res.meta);
       }
     } catch (e) {
       setGeneratedDishResult({
@@ -166,21 +156,16 @@ export const LiveAiTestModal: React.FC<Props> = ({ isOpen, onClose, initialMode 
     setReviewMeta(null);
 
     try {
-      const res = await fetch('/api/ai/respond-review', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          rating, 
-          guestName, 
-          reviewText, 
-          platform,
-          restaurantName: 'Resto Luxury' 
-        })
+      const res = await generateReviewReply({ 
+        rating, 
+        guestName, 
+        reviewText, 
+        platform,
+        restaurantName: 'Resto Luxury' 
       });
-      const data = await res.json();
-      if (data.data) {
-        setGeneratedReviewResult(data.data);
-        setReviewMeta(data.meta);
+      if (res.data) {
+        setGeneratedReviewResult(res.data);
+        setReviewMeta(res.meta);
       }
     } catch (e) {
       setGeneratedReviewResult({
