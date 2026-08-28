@@ -19,7 +19,7 @@ export default function App() {
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
   const [auditCustomData, setAuditCustomData] = useState<any>(null);
   const [isAiTestModalOpen, setIsAiTestModalOpen] = useState(false);
-  const [aiTestInitialMode, setAiTestInitialMode] = useState<'description' | 'review'>('description');
+  const [aiTestInitialMode, setAiTestInitialMode] = useState<'chat' | 'description' | 'review'>('chat');
 
   const handleOpenAuditModal = (customData?: any) => {
     setAuditCustomData(customData || null);
@@ -31,7 +31,7 @@ export default function App() {
     setAuditCustomData(null);
   };
 
-  const handleOpenAiTestModal = (mode: 'description' | 'review' = 'description') => {
+  const handleOpenAiTestModal = (mode: 'chat' | 'description' | 'review' = 'chat') => {
     setAiTestInitialMode(mode);
     setIsAiTestModalOpen(true);
   };

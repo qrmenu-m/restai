@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 interface Props {
-  onOpenCalculator: () => void;
+  onOpenCalculator?: () => void;
   onOpenAuditModal: () => void;
   onOpenAiTestModal: () => void;
 }

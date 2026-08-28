@@ -12,7 +12,7 @@ const PORT = 3000;
 
 app.use(express.json());
 
-// Lazy-initialized Gemini client
+// Lazy-initialized Gemini client using official @google/genai SDK
 let aiClient: GoogleGenAI | null = null;
 function getAIClient(): GoogleGenAI | null {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -35,77 +35,123 @@ function getAIClient(): GoogleGenAI | null {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    aiReady: Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'MY_GEMINI_API_KEY')
+  });
 });
+
+// Helper for calling Gemini model with fast fallback
+async function callGeminiModel(contents: string, systemInstruction?: string, isJson: boolean = false) {
+  const ai = getAIClient();
+  if (!ai) return null;
+
+  const modelsToTry = ['gemini-3.5-flash-lite', 'gemini-3.5-flash'];
+  let lastError = null;
+
+  for (const modelName of modelsToTry) {
+    try {
+      const config: any = {
+        temperature: 0.7,
+      };
+      if (isJson) {
+        config.responseMimeType = 'application/json';
+      }
+      if (systemInstruction) {
+        config.systemInstruction = systemInstruction;
+      }
+
+      const response = await ai.models.generateContent({
+        model: modelName,
+        contents,
+        config,
+      });
+
+      return {
+        text: response.text?.trim() || '',
+        model: modelName,
+      };
+    } catch (err: any) {
+      lastError = err;
+      console.warn(`Model ${modelName} call failed, trying next fallback:`, err?.message);
+    }
+  }
+
+  throw lastError || new Error('All Gemini models failed');
+}
 
 // 1. AI Menu Description Generator
 app.post('/api/ai/describe-dish', async (req, res) => {
+  const startTime = Date.now();
   try {
     const { dishName, ingredients, category, style, language } = req.body;
-    const ai = getAIClient();
 
     if (!dishName) {
       return res.status(400).json({ error: 'Dish name is required' });
     }
 
-    if (ai) {
-      try {
-        const prompt = `Ты — ведущий шеф-редактор ресторанных меню и гастрономический копирайтер для заведений общепита и HoReCa (рестораны, гастробары, кафе, бистро, лаундж-бары).
-Создай продающее, сочное и аппетитное описание блюда для электронного меню.
+    try {
+      const prompt = `Ты — первоклассный гастрономический копирайтер и шеф-редактор ресторанных меню.
+Твоя задача: составить аппетитное, продающее и уникальное описание блюда строго на основе переданных параметров.
 
-Название блюда: ${dishName}
-Ингредиенты / состав: ${ingredients || 'Фирменный рецепт заведения'}
-Категория: ${category || 'Основное меню'}
-Стиль подачи: ${style || 'Dark Tech-Luxury гастрономия / современный HoReCa'}
-Язык: ${language || 'ru'}
+ВХОДНЫЕ ДАННЫЕ:
+- Название блюда: "${dishName}"
+- Состав и ингредиенты: "${ingredients || 'авторский состав'}"
+- Категория: "${category || 'Основное меню'}"
+- Желаемый стиль: "${style || 'Ресторанная гастрономия'}"
+- Язык ответа: "${language === 'kz' ? 'Казахский (Қазақ тілі)' : language === 'en' ? 'English' : 'Русский'}"
 
-Верни ответ СТРОГО в формате JSON без markdown разметки:
+ТРЕБОВАНИЯ:
+1. Никаких банальных штампов вроде "насладитесь незабываемым вкусом".
+2. Опиши текстуру, оттенки вкуса, технологию приготовления и температуру подачи.
+3. Подбери идеальный напиток (чай, морс, вино, авторский лимонад) для допродажи.
+4. Дай официанту/кассиру живую рекомендацию (upsell hook) в 1 короткую фразу.
+
+Верни ответ СТРОГО в формате JSON без markdown:
 {
-  "shortDescription": "Краткое продающее описание (1-2 предложения, пробуждающее аппетит и подчеркивающее свежесть и текстуру)",
-  "fullDescription": "Развернутое аппетитное описание с акцентом на ингредиенты, технологию приготовления и подачу",
+  "shortDescription": "Краткое продающее описание для карточки в меню (1-2 предложения)",
+  "fullDescription": "Развернутое гастрономическое описание с деталями вкуса и текстуры",
   "flavorProfile": "Вкусовой профиль (например: 'Пряный, с дымными нотами и сливочным послевкусием')",
-  "pairingSuggestion": "Рекомендация сопутствующего напитка или комплементарного блюда для допродажи",
-  "upsellHook": "Короткая фраза официанту/кассиру для предложения гостю"
+  "pairingSuggestion": "Рекомендованный напиток или соус для пейринга",
+  "upsellHook": "Короткая фраза официанту для предложения гостю"
 }`;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-3.6-flash',
-          contents: prompt,
-          config: {
-            responseMimeType: 'application/json',
-            temperature: 0.7,
-          },
-        });
+      const aiResult = await callGeminiModel(prompt, undefined, true);
+      const duration = Date.now() - startTime;
 
-        const rawText = response.text?.trim() || '{}';
-        const parsed = JSON.parse(rawText);
-        return res.json({ success: true, data: parsed });
-      } catch (genError: any) {
-        console.warn('Gemini generateContent notice, using smart local generator:', genError?.message);
-        return res.json({
-          success: true,
-          data: {
-            shortDescription: `Фирменное блюдо «${dishName}», приготовленное из отборных ингредиентов с идеальным балансом вкуса и текстуры.`,
-            fullDescription: `Блюдо раскрывает богатую гастрономическую палитру благодаря бережной технологии приготовления, подчеркивающей натуральный вкус каждого ингредиента.`,
-            flavorProfile: `Гармоничный, насыщенный с ярким послевкусием и аппетитным ароматом`,
-            pairingSuggestion: `Фирменный ягодный морс, свежезаваренный чай или авторский лимонад`,
-            upsellHook: `«Наш шеф рекомендует попробовать — одно из самых любимых блюд наших гостей!»`
-          }
+      if (aiResult) {
+        const parsed = JSON.parse(aiResult.text || '{}');
+        return res.json({ 
+          success: true, 
+          data: parsed, 
+          meta: { 
+            isLiveApi: true, 
+            model: aiResult.model,
+            latencyMs: duration 
+          } 
         });
       }
-    } else {
-      // Smart offline fallback
-      return res.json({
-        success: true,
-        data: {
-          shortDescription: `Фирменное блюдо «${dishName}» с нежной текстурой и авторской подачей от шеф-повара.`,
-          fullDescription: `Свежие фермерские ингредиенты, томление на медленном огне и акценты пряных трав создают непревзойденный вкус.`,
-          flavorProfile: `Насыщенный, сочный с легкими дымными нотами`,
-          pairingSuggestion: `Авторский чай с горными травами или свежий ягодный лимонад`,
-          upsellHook: `«Попробуйте фирменную подачу от шефа — сегодня блюдо особенно удалось!»`
-        }
-      });
+    } catch (genError: any) {
+      console.warn('Gemini generateContent error, using smart fallback:', genError?.message);
     }
+
+    // Smart fallback
+    const duration = Date.now() - startTime;
+    return res.json({
+      success: true,
+      data: {
+        shortDescription: `Фирменное блюдо «${dishName}», приготовленное из отборных ингредиентов с идеальным балансом вкуса и текстуры.`,
+        fullDescription: `Блюдо раскрывает богатую гастрономическую палитру благодаря бережной технологии приготовления, подчеркивающей натуральный вкус каждого ингредиента.`,
+        flavorProfile: `Гармоничный, насыщенный с ярким послевкусием и аппетитным ароматом`,
+        pairingSuggestion: `Фирменный ягодный морс, свежезаваренный чай или авторский лимонад`,
+        upsellHook: `«Наш шеф рекомендует попробовать — одно из самых любимых блюд наших гостей!»`
+      },
+      meta: { 
+        isLiveApi: false, 
+        latencyMs: duration 
+      }
+    });
   } catch (err: any) {
     console.error('Error generating dish description:', err);
     res.status(500).json({ error: err.message || 'Failed to generate description' });
@@ -114,83 +160,139 @@ app.post('/api/ai/describe-dish', async (req, res) => {
 
 // 2. AI Review Responder
 app.post('/api/ai/respond-review', async (req, res) => {
+  const startTime = Date.now();
   try {
     const { rating, guestName, reviewText, restaurantName, platform } = req.body;
-    const ai = getAIClient();
 
     if (!reviewText) {
       return res.status(400).json({ error: 'Review text is required' });
     }
 
-    if (ai) {
-      try {
-        const prompt = `Ты — управляющий заведением общепита и HoReCa "${restaurantName || 'Resto'}" с безупречным чувством такта и высочайшими стандартами сервиса.
-Сгенерируй идеальный ответ на отзыв гостя на платформе ${platform || '2GIS / Яндекс'}.
+    try {
+      const prompt = `Ты — опытный управляющий заведением в Казахстане с высочайшим эмоциональным интеллектом и культурой гостеприимства.
+Сгенерируй живой, персональный и безупречный ответ на отзыв гостя.
 
-Оценка гостя: ${rating} из 5 звезд
-Имя гостя: ${guestName || 'Уважаемый гость'}
-Текст отзыва: "${reviewText}"
+ДАННЫЕ ОТЗЫВА:
+- Платформа: ${platform || '2GIS'}
+- Оценка: ${rating} из 5 звезд
+- Имя гостя: ${guestName || 'Гость'}
+- Текст отзыва: "${reviewText}"
+- Заведение: "${restaurantName || 'Resto'}"
 
-Правила:
-- Если отзыв 4-5★: поблагодари искренне, отметь детали визита, пригласи снова на новые позиции меню.
-- Если отзыв 1-3★: вырази искреннее сопереживание без шаблонных отговорок, покажи, что вопрос уже на контроле у шеф-повара и управляющего, и предложи связаться в WhatsApp/Telegram для комплимента.
-- Тон: вежливый, теплый, статусный, без канцелярита.
+ПРАВИЛА СОСТАВЛЕНИЯ ОТВЕТА:
+1. Запрещены сухие отписки ("Спасибо за ваш отзыв, мы учтем").
+2. Обязательно обратись к гостю по имени.
+3. Ответь ИМЕННО на то, о чем написал гость:
+   - Если гость похвалил конкретное блюдо или официанта — упомяни это и передай благодарность команде.
+   - Если гость пожаловался (на долгое ожидание, холодную еду, невнимательность, шум и т.д.) — искренне извинись без оправданий, покажи, что проблема уже передана шефу/администратору смены, и дай прямой контакт (WhatsApp) для компенсации и комплимента при следующем визите.
+4. Тон ответа: тактичный, уважительный, дружелюбный, живой.
 
 Верни ответ СТРОГО в формате JSON без markdown:
 {
-  "replyText": "Текст ответа гостю",
-  "sentiment": "positive",
-  "actionItem": "Внутренняя задача персоналу (например: 'Проверить скорость подачи горячих блюд')",
-  "responseTimeSeconds": 1.2
+  "replyText": "Полный текст ответа гостю",
+  "sentiment": "positive | negative | neutral",
+  "actionItem": "Конкретная управленческая задача смене (например: 'Проверить время отдачи горячих блюд в пик с 13:00 до 15:00')",
+  "responseTimeSeconds": 1.1
 }`;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-3.6-flash',
-          contents: prompt,
-          config: {
-            responseMimeType: 'application/json',
-            temperature: 0.7,
-          },
-        });
+      const aiResult = await callGeminiModel(prompt, undefined, true);
+      const duration = Date.now() - startTime;
 
-        const parsed = JSON.parse(response.text?.trim() || '{}');
-        return res.json({ success: true, data: parsed });
-      } catch (genError: any) {
-        console.warn('Gemini review notice, using smart local fallback:', genError?.message);
-        const isPositive = Number(rating) >= 4;
-        return res.json({
-          success: true,
-          data: {
-            replyText: isPositive
-              ? `Здравствуйте, ${guestName || 'дорогой гость'}! Благодарим вас за высокую оценку и теплый отзыв. Нашей команде невероятно приятно, что визит доставил вам удовольствие. Будем рады видеть вас снова!`
-              : `Здравствуйте, ${guestName || 'дорогой гость'}. Благодарим за обратную связь и приносим извинения за возникшие неудобства. Мы уже передали ваши замечания шеф-повару и управляющему. Напишите нам в WhatsApp по номеру +7 (708) 655-85-18 — мы хотим лично загладить впечатление и угостить вас при следующем визите!`,
-            sentiment: isPositive ? 'positive' : 'negative',
-            actionItem: isPositive ? 'Передать благодарность смене кухни и зала' : 'Связаться с гостем для персонального комплимента',
-            responseTimeSeconds: 1.1
+      if (aiResult) {
+        const parsed = JSON.parse(aiResult.text || '{}');
+        return res.json({ 
+          success: true, 
+          data: parsed,
+          meta: {
+            isLiveApi: true,
+            model: aiResult.model,
+            latencyMs: duration
           }
         });
       }
-    } else {
-      const isPositive = Number(rating) >= 4;
-      return res.json({
-        success: true,
-        data: {
-          replyText: isPositive
-            ? `Здравствуйте, ${guestName || 'дорогой гость'}! Благодарим вас за отзыв и высокую оценку. Всегда рады стараться для вас и ждем в гости снова!`
-            : `Здравствуйте, ${guestName || 'дорогой гость'}. Приносим искренние извинения. Мы уже разобрали ситуацию с командой смены. Напишите нам по номеру +7 (708) 655-85-18 в WhatsApp или Telegram, чтобы мы могли исправить впечатление!`,
-          sentiment: isPositive ? 'positive' : 'negative',
-          actionItem: isPositive ? 'Передать благодарность персоналу' : 'Связаться с гостем для урегулирования ситуации',
-          responseTimeSeconds: 1.1
-        }
-      });
+    } catch (genError: any) {
+      console.warn('Gemini review generation error, using smart fallback:', genError?.message);
     }
+
+    const isPositive = Number(rating) >= 4;
+    const duration = Date.now() - startTime;
+    return res.json({
+      success: true,
+      data: {
+        replyText: isPositive
+          ? `Здравствуйте, ${guestName || 'дорогой гость'}! Благодарим вас за высокую оценку и теплые слова. Нашей команде невероятно приятно, что визит доставил вам удовольствие. Обязательно заглядывайте к нам снова на новинки сезона!`
+          : `Здравствуйте, ${guestName || 'дорогой гость'}. Приносим самые искренние извинения за испорченное впечатление. Ситуация, о которой вы написали, совершенно недопустима для наших стандартов. Мы уже передали ваши замечания управляющему и шеф-повару. Напишите нам в WhatsApp по номеру +7 (708) 655-85-18 — мы хотим лично принести извинения и угостить вас при следующем визите.`,
+        sentiment: isPositive ? 'positive' : 'negative',
+        actionItem: isPositive ? 'Передать благодарность смене кухни и зала' : 'Связаться с гостем для персонального комплимента',
+        responseTimeSeconds: 1.1
+      },
+      meta: {
+        isLiveApi: false,
+        latencyMs: duration
+      }
+    });
   } catch (err: any) {
     console.error('Error responding to review:', err);
     res.status(500).json({ error: err.message || 'Failed to respond to review' });
   }
 });
 
-// 3. Lead & Audit Request
+// 3. Live AI Restaurant Consultant & Q&A Assistant
+app.post('/api/ai/chat', async (req, res) => {
+  const startTime = Date.now();
+  try {
+    const { message, category = 'general', context = '' } = req.body;
+
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
+    const systemInstruction = `Ты — живой, остроумный и высококвалифицированный эксперт по ресторанному бизнесу и цифровизации HoReCa в Казахстане (RestoAI).
+
+ТВОЯ МАНЕРА ОБЩЕНИЯ:
+- Если пользователь просто здоровается ("даров", "привет", "салам", "хай", "как дела", "здарова"): отвечай тепло, живо, по-человечески (например: "Салем! / Привет! Рад слышать. Чем помочь твоему заведению? Рассказывай: нужно навести порядок в меню, убрать очереди, посчитать фудкост или подтянуть отзывы в 2GIS?").
+- Если задан вопрос по фудкосту, меню, очередям, персоналу, продвижению: давай емкие, профессиональные, практичные советы с конкретными примерами, цифрами в тенге (₸) и процентах.
+- Структурируй длинные ответы четкими пунктами, избегай пустой "воды" и канцелярщины.
+- Отлично разбирайся в специфике общепита Алматы, Астаны, Шымкента и всего Казахстана (2GIS, Kaspi Pay, обеды для БЦ, национальные и европейские блюда, поставки мяса и продуктов).`;
+
+    try {
+      const userPrompt = `Сообщение пользователя: "${message}"\n${category ? `Категория: ${category}` : ''}\n${context ? `Контекст: ${context}` : ''}`;
+      const aiResult = await callGeminiModel(userPrompt, systemInstruction, false);
+      const duration = Date.now() - startTime;
+
+      if (aiResult) {
+        return res.json({
+          success: true,
+          answer: aiResult.text,
+          meta: {
+            isLiveApi: true,
+            model: aiResult.model,
+            latencyMs: duration,
+            timestamp: new Date().toISOString()
+          }
+        });
+      }
+    } catch (genError: any) {
+      console.warn('Gemini chat error, using smart fallback:', genError?.message);
+    }
+
+    const duration = Date.now() - startTime;
+    return res.json({
+      success: true,
+      answer: `**Рекомендация эксперта RestoAI:**\n\nПо вашему вопросу: *«${message}»*:\n\n1. **Экономика и маржинальность:** Оптимизируйте техкарты и зафиксируйте фудкост на уровне 28–34%.\n2. **Скорость обслуживания:** Внедрите электронное QR-меню с откликом 0.18 сек для ускорения посадки.\n3. **Увеличение среднего чека:** Настройте умные допродажи и рассылку ланчей.\n4. **Репутация в 2GIS:** Отвечайте на 100% отзывов персонально в течение 15 минут.`,
+      meta: {
+        isLiveApi: false,
+        latencyMs: duration,
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (err: any) {
+    console.error('Error handling AI chat:', err);
+    res.status(500).json({ error: err.message || 'Failed to handle chat message' });
+  }
+});
+
+// 4. Lead & Audit Request
 app.post('/api/lead', async (req, res) => {
   try {
     const { name, phone, establishment, city, servicesSelected, message } = req.body;
@@ -225,3 +327,4 @@ async function startServer() {
 }
 
 startServer();
+

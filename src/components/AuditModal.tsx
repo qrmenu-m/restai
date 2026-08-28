@@ -26,6 +26,12 @@ export const AuditModal: React.FC<Props> = ({ isOpen, onClose, customData }) => 
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  React.useEffect(() => {
+    if (isOpen) {
+      setSubmitted(false);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {

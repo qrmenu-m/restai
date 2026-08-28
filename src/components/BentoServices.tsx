@@ -24,11 +24,36 @@ import {
 import { KazakhOrnamentDivider } from './KazakhOrnamentDivider';
 
 interface Props {
-  onOpenCalculator: (serviceId?: string) => void;
-  onOpenAiTest: (mode?: 'description' | 'review') => void;
+  onOpenCalculator?: (serviceId?: string) => void;
+  onOpenAiTest?: (mode?: 'chat' | 'description' | 'review') => void;
+  onOpenAuditModal?: (serviceName: string) => void;
+  onOpenAiTestModal?: (mode?: 'chat' | 'description' | 'review') => void;
 }
 
-export const BentoServices: React.FC<Props> = ({ onOpenCalculator, onOpenAiTest }) => {
+export const BentoServices: React.FC<Props> = ({ 
+  onOpenCalculator, 
+  onOpenAiTest,
+  onOpenAuditModal,
+  onOpenAiTestModal
+}) => {
+  const handleOpenCalcOrAudit = (serviceId: string, serviceTitle: string) => {
+    if (onOpenCalculator) {
+      onOpenCalculator(serviceId);
+    } else if (onOpenAuditModal) {
+      onOpenAuditModal(serviceTitle);
+    } else {
+      const el = document.getElementById('pricing');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleOpenAiModal = (mode: 'chat' | 'description' | 'review' = 'chat') => {
+    if (onOpenAiTest) {
+      onOpenAiTest(mode);
+    } else if (onOpenAiTestModal) {
+      onOpenAiTestModal(mode);
+    }
+  };
   
   // ----------------------------------------------------
   // DEMO 1: QR MENU STATE & INTERACTION FOR CANTEENS / CAFES
@@ -304,7 +329,7 @@ export const BentoServices: React.FC<Props> = ({ onOpenCalculator, onOpenAiTest 
             <div className="mt-4 pt-4 border-t border-[#22222A] flex items-center justify-between">
               <span className="text-xs text-[#A3A3A8]">Примеры: FreshFish, Sabr Cafe, SUDO</span>
               <button 
-                onClick={() => onOpenCalculator('qr-menu')}
+                onClick={() => handleOpenCalcOrAudit('qr-menu', 'Интерактивное QR-меню')}
                 className="text-xs font-bold text-[#C9A15A] hover:text-[#F5F1EA] flex items-center gap-1 cursor-pointer"
               >
                 <span>Выбрать тариф QR-меню</span>
@@ -427,7 +452,7 @@ export const BentoServices: React.FC<Props> = ({ onOpenCalculator, onOpenAiTest 
             <div className="mt-4 pt-4 border-t border-[#22222A] flex items-center justify-between">
               <span className="text-xs text-[#A3A3A8]">Синхронизация с кассой</span>
               <button 
-                onClick={() => onOpenCalculator('techcards-cost')}
+                onClick={() => handleOpenCalcOrAudit('techcards-cost', 'ИИ-техкарты и маржа порций')}
                 className="text-xs font-bold text-[#C9A15A] hover:text-[#F5F1EA] flex items-center gap-1 cursor-pointer"
               >
                 <span>Подключить техкарты</span>
@@ -507,7 +532,7 @@ export const BentoServices: React.FC<Props> = ({ onOpenCalculator, onOpenAiTest 
                   <Check className="w-3 h-3" /> Стимулирует взять выпечку и напиток
                 </span>
                 <button
-                  onClick={() => onOpenAiTest('description')}
+                  onClick={() => handleOpenAiModal('description')}
                   className="text-[#C9A15A] hover:underline cursor-pointer"
                 >
                   Ввести свое блюдо →
@@ -518,7 +543,7 @@ export const BentoServices: React.FC<Props> = ({ onOpenCalculator, onOpenAiTest 
             <div className="mt-4 pt-3 border-t border-[#22222A] flex items-center justify-between">
               <span className="text-xs text-[#A3A3A8]">Языки: RU, KZ, EN</span>
               <button 
-                onClick={() => onOpenCalculator('ai-menu-descriptions')}
+                onClick={() => handleOpenCalcOrAudit('ai-menu-descriptions', 'Аппетитные AI-описания блюд')}
                 className="text-xs font-bold text-[#C9A15A] hover:text-[#F5F1EA] flex items-center gap-1 cursor-pointer"
               >
                 <span>Заказать AI-описания</span>
@@ -622,7 +647,7 @@ export const BentoServices: React.FC<Props> = ({ onOpenCalculator, onOpenAiTest 
             <div className="mt-4 pt-3 border-t border-[#22222A] flex items-center justify-between">
               <span className="text-xs text-[#A3A3A8]">ТОП-3 в 2GIS по району</span>
               <button 
-                onClick={() => onOpenCalculator('ai-reviews')}
+                onClick={() => handleOpenCalcOrAudit('ai-reviews', 'Авто-ответы на отзывы 2GIS и Карты')}
                 className="text-xs font-bold text-[#C9A15A] hover:text-[#F5F1EA] flex items-center gap-1 cursor-pointer"
               >
                 <span>Подключить 2GIS / Яндекс</span>
@@ -688,25 +713,25 @@ export const BentoServices: React.FC<Props> = ({ onOpenCalculator, onOpenAiTest 
               <div className="grid grid-cols-2 gap-1.5 pt-1">
                 <button
                   onClick={() => handleTgAction('🍲 Меню обеда на сегодня', 'Сегодня на ланче: Борщ со сметаной, Плов праздничный, салат Витаминный, компот из сухофруктов. Комплекс всего 1 900 ₸!')}
-                  className="p-1.5 rounded-lg bg-[#16161E] hover:bg-[#20202C] text-[#E6C280] border border-[#272734] text-[11px] font-mono-code transition-all text-center"
+                  className="p-1.5 rounded-lg bg-[#16161E] hover:bg-[#20202C] text-[#E6C280] border border-[#272734] text-[11px] font-mono-code transition-all text-center cursor-pointer"
                 >
                   🍲 Меню дня (обед)
                 </button>
                 <button
                   onClick={() => handleTgAction('📦 Предзаказ навынос к 13:00', 'Ваш предзаказ #42 принят! Соберем к 13:00 в термобоксах без очереди на кассе.')}
-                  className="p-1.5 rounded-lg bg-[#16161E] hover:bg-[#20202C] text-[#E6C280] border border-[#272734] text-[11px] font-mono-code transition-all text-center"
+                  className="p-1.5 rounded-lg bg-[#16161E] hover:bg-[#20202C] text-[#E6C280] border border-[#272734] text-[11px] font-mono-code transition-all text-center cursor-pointer"
                 >
                   📦 Заказ навынос
                 </button>
                 <button
                   onClick={() => handleTgAction('📍 Как пройти к вам?', 'Мы находимся: 1 этаж БЦ "Алатау", вход со двора. Маршрут в 2GIS: https://2gis.kz/...')}
-                  className="p-1.5 rounded-lg bg-[#16161E] hover:bg-[#20202C] text-[#D1D1D6] border border-[#272734] text-[11px] font-mono-code transition-all text-center"
+                  className="p-1.5 rounded-lg bg-[#16161E] hover:bg-[#20202C] text-[#D1D1D6] border border-[#272734] text-[11px] font-mono-code transition-all text-center cursor-pointer"
                 >
                   📍 2GIS Маршрут
                 </button>
                 <button
                   onClick={() => handleTgAction('🏷 Скидка после 17:30', 'Каждый день с 17:30 скидка -30% на всю выпечку и готовые блюда раздачи!')}
-                  className="p-1.5 rounded-lg bg-[#16161E] hover:bg-[#20202C] text-[#D1D1D6] border border-[#272734] text-[11px] font-mono-code transition-all text-center"
+                  className="p-1.5 rounded-lg bg-[#16161E] hover:bg-[#20202C] text-[#D1D1D6] border border-[#272734] text-[11px] font-mono-code transition-all text-center cursor-pointer"
                 >
                   🏷 Скидка -30%
                 </button>
@@ -716,7 +741,7 @@ export const BentoServices: React.FC<Props> = ({ onOpenCalculator, onOpenAiTest 
             <div className="mt-4 pt-3 border-t border-[#22222A] flex items-center justify-between">
               <span className="text-xs text-[#A3A3A8]">Авто-рассылка соседним офисам</span>
               <button 
-                onClick={() => onOpenCalculator('tg-bot')}
+                onClick={() => handleOpenCalcOrAudit('tg-bot', 'Telegram-бот: Меню ланчей и самовывоз')}
                 className="text-xs font-bold text-[#C9A15A] hover:text-[#F5F1EA] flex items-center gap-1 cursor-pointer"
               >
                 <span>Создать бота</span>
@@ -785,7 +810,7 @@ export const BentoServices: React.FC<Props> = ({ onOpenCalculator, onOpenAiTest 
             <div className="mt-4 pt-3 border-t border-[#22222A] flex items-center justify-between">
               <span className="text-xs text-[#A3A3A8]">Без ручного сведения тетрадей и Excel</span>
               <button 
-                onClick={() => onOpenCalculator('daily-digest')}
+                onClick={() => handleOpenCalcOrAudit('daily-digest', 'Утренний отчёт владельцу в 08:00')}
                 className="text-xs font-bold text-[#C9A15A] hover:text-[#F5F1EA] flex items-center gap-1 cursor-pointer"
               >
                 <span>Подключить отчеты</span>

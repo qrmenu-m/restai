@@ -17,18 +17,27 @@ import {
 import { KazakhOrnamentDivider } from './KazakhOrnamentDivider';
 
 interface Props {
-  onOpenCalculator: () => void;
-  onOpenAiTest: () => void;
+  onOpenCalculator?: () => void;
+  onOpenAiTestModal?: (mode?: 'chat' | 'description' | 'review') => void;
   onOpenAuditModal: () => void;
 }
 
-export const Hero: React.FC<Props> = ({ onOpenCalculator, onOpenAiTest, onOpenAuditModal }) => {
+export const Hero: React.FC<Props> = ({ onOpenCalculator, onOpenAiTestModal, onOpenAuditModal }) => {
   // Dynamic live metric simulation (ticking every 2.5s)
   const [revenue, setRevenue] = useState(1482600);
   const [qrOrders, setQrOrders] = useState(142);
   const [reviewsAnswered, setReviewsAnswered] = useState(38);
   const [foodCostSaved, setFoodCostSaved] = useState(194200);
   const [pulseActive, setPulseActive] = useState(false);
+
+  const scrollToCalculator = () => {
+    if (onOpenCalculator) {
+      onOpenCalculator();
+    } else {
+      const el = document.getElementById('pricing-calculator') || document.getElementById('pricing');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -91,7 +100,7 @@ export const Hero: React.FC<Props> = ({ onOpenCalculator, onOpenAiTest, onOpenAu
         {/* Action Buttons */}
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md sm:max-w-xl mx-auto">
           <button
-            onClick={onOpenCalculator}
+            onClick={scrollToCalculator}
             className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-gradient-to-r from-[#C9A15A] to-[#B8794A] hover:from-[#D8AF67] hover:to-[#C68758] text-[#0B0B0D] font-extrabold text-sm transition-all shadow-[0_0_30px_rgba(201,161,90,0.3)] hover:shadow-[0_0_40px_rgba(201,161,90,0.5)] flex items-center justify-center gap-2 group cursor-pointer"
           >
             <span>Рассчитать стоимость для заведения</span>
@@ -223,7 +232,7 @@ export const Hero: React.FC<Props> = ({ onOpenCalculator, onOpenAiTest, onOpenAu
                 </span>
               </div>
               <button 
-                onClick={onOpenAiTest}
+                onClick={() => onOpenAiTestModal && onOpenAiTestModal('chat')}
                 className="text-[#C9A15A] hover:text-[#F5F1EA] underline text-xs font-semibold shrink-0 cursor-pointer"
               >
                 Протестировать AI вживую →
